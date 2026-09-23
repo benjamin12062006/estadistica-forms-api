@@ -1,0 +1,12 @@
+@apiUrl = http://127.0.0.1:8080/api/v1
+
+### Sin sesión: debe responder 401
+# @name unauthenticated
+GET {{apiUrl}}/auth/me
+Accept: application/json
+
+### Con sesión: el token existe solo durante la ejecución local
+# @name authenticated
+GET {{apiUrl}}/auth/me
+Accept: application/json
+Authorization: Bearer {{$processEnv TEST_SESSION_JWT}}

@@ -1,0 +1,27 @@
+@baseUrl = http://127.0.0.1:8080
+
+###
+# Un espacio estadístico comienza vacío y pertenece al proceso local mientras
+# todavía no implementamos autenticación ni persistencia.
+POST {{baseUrl}}/api/v1/statistical-spaces
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "Satisfacción de usuarios"
+}
+
+###
+# Consultar los espacios creados desde que se inició la API.
+GET {{baseUrl}}/api/v1/statistical-spaces
+Accept: application/json
+
+###
+# Comprobar la validación de un nombre vacío.
+POST {{baseUrl}}/api/v1/statistical-spaces
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "   "
+}

@@ -1,0 +1,46 @@
+{
+  "name": "estadistica-forms-api",
+  "version": "0.1.0",
+  "description": "API de formularios y estadísticas: aprendizaje incremental con NestJS.",
+  "author": "",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "build": "nest build",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:prod": "node dist/main.js",
+    "lint": "oxlint --type-aware src/",
+    "api:request": "httpyac requests/",
+    "api:auth-test": "node scripts/descope/run-auth-request.mts"
+  },
+  "dependencies": {
+    "@descope/node-sdk": "^2.17.0",
+    "@nestjs/common": "12.0.3",
+    "@nestjs/core": "12.0.3",
+    "@nestjs/platform-express": "12.0.3",
+    "@tursodatabase/database": "^0.7.2",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "12.0.3",
+    "@nestjs/schematics": "^12.0.0",
+    "@types/express": "^5.0.0",
+    "@types/node": "^24.0.0",
+    "httpyac": "^6.16.7",
+    "oxlint": "^1.58.0",
+    "oxlint-tsgolint": "^7.0.2001",
+    "prettier": "^3.4.2",
+    "source-map-support": "^0.5.21",
+    "typescript": "^6.0.2"
+  },
+  "packageManager": "pnpm@12.5.1+sha512.e3f305bc784a2bc89f5ad3b6138889470fae8d2af5f36b61216ec91c2c3d64089775f9de38aac331044ea40f245cb0d5666392dfdf65824e1907ef6a2c62de5f",
+  "engines": {
+    "node": "26.0.0",
+    "pnpm": ">=12"
+  }
+}
