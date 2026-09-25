@@ -6,7 +6,7 @@ Fecha de consulta y comprobación: 2026-09-24
 
 El archivo [`docker-compose.yml`](../../docker-compose.yml) usa `alpine/sqlite:latest`. El servicio `sqlite` mantiene visible un contenedor de herramientas, pero SQLite sigue siendo una base embebida: los datos viven en `.data/estadistica-dev.db` y no existe un servidor ni un puerto de base de datos.
 
-El directorio local `.data/` se monta como `/data` dentro del contenedor. Las migraciones de `migrations/` se montan como solo lectura en `/migrations`.
+El directorio local `.data/` se monta como `/data` dentro del contenedor. Prisma Migrate se ejecuta desde el host y trabaja sobre ese mismo archivo; Compose no mantiene un segundo migrador.
 
 ## Arrancar y detener
 
@@ -32,23 +32,20 @@ docker compose down
 ## Aplicar migraciones
 
 ```bash
-docker compose run --rm migrate
+pnpm db:local:migrate
 ```
 
-El comando:
+El comando activo:
 
-1. crea `schema_migrations` si no existe;
-2. lee en orden los archivos `migrations/NNN_nombre.sql`;
-3. omite los que ya están registrados;
-4. aplica cada migración pendiente dentro de una transacción;
-5. registra la versión aplicada.
+1. lee en orden `prisma/migrations/*/migration.sql`;
+2. omite los cambios ya registrados;
+3. aplica cada migración pendiente;
+4. registra el resultado en `_prisma_migrations`.
 
-Para migrar otro archivo dentro de `.data/`:
+Para ver el estado:
 
 ```bash
-docker compose run --rm \
-  -e SQLITE_DATABASE=/data/otra-base.db \
-  migrate
+pnpm db:local:status
 ```
 
 ## Abrir la consola SQLite
@@ -65,7 +62,7 @@ Comandos útiles dentro de la consola:
 .tables
 .schema app_users
 .schema statistical_spaces
-SELECT * FROM schema_migrations ORDER BY version;
+SELECT migration_name, finished_at FROM _prisma_migrations ORDER BY migration_name;
 PRAGMA foreign_key_check;
 .quit
 ```
@@ -75,7 +72,7 @@ También se puede ejecutar una consulta sin abrir la consola interactiva:
 ```bash
 docker compose exec sqlite \
   sqlite3 /data/estadistica-dev.db \
-  "SELECT version FROM schema_migrations ORDER BY version;"
+  "SELECT migration_name FROM _prisma_migrations ORDER BY migration_name;"
 ```
 
 ## Conexión local creada en DataGrip
@@ -100,8 +97,8 @@ DataGrip abre directamente el archivo del host. No debe configurarse `localhost`
 
 - `alpine/sqlite:latest` resolvió SQLite 3.53.4 al comprobar esta configuración.
 - El contenedor `sqlite` puede mantenerse en ejecución sin levantar Nest.
-- El migrador reconoció las tres migraciones existentes.
-- Una base temporal nueva recibió `001`, `002` y `003` y expuso `app_users`, `schema_migrations` y `statistical_spaces`.
+- La base existente recibió un baseline no destructivo en `_prisma_migrations`; puede conservar `schema_migrations` como dato histórico, pero Prisma ya no lo consulta.
+- Una base temporal nueva recibió las tres migraciones de Prisma y expuso `app_users`, `_prisma_migrations` y `statistical_spaces`.
 - La conexión `Estadistica Local SQLite` respondió correctamente desde DataGrip.
 
 ## Fuentes

@@ -3,12 +3,13 @@
 Backend de formularios, estadísticas e investigación, construido paso a paso con **NestJS + TypeScript + pnpm**. Ya dispone de identidad validada, perfil local y espacios privados persistidos.
 
 Las [etapas de autenticación](./docs/plans/03-etapas-autenticacion-descope-turso.md)
-validan sesiones con Descope y guardan perfiles y espacios en libSQL/Turso. Configura
-`TURSO_DATABASE_URL` y `TURSO_AUTH_TOKEN` en `.env` (sin versionarlo) y ejecuta
-`pnpm db:migrate` una vez por entorno antes de usar las rutas persistentes. La API
-comprueba la conexión al iniciar; las migraciones se aplican solo con ese comando.
-`pnpm db:verify`, `pnpm users:verify` y `pnpm spaces:verify` usan bases aisladas en
-memoria, sin escribir en Turso remoto.
+validan sesiones con Descope y guardan perfiles y espacios en SQLite local. Configura
+`DATABASE_URL=file:./.data/estadistica-dev.db` en `.env` y ejecuta
+`pnpm db:local:migrate` antes de usar las rutas persistentes. `prisma/migrations`
+es la única fuente activa de cambios; las pruebas crean bases SQLite temporales y
+aplican sobre ellas esa misma historia.
+
+Para crear un cambio de esquema se usa `pnpm db:local:migration:create -- --name nombre`. La misma migración se despliega localmente con `pnpm db:local:migrate` y en Turso con `pnpm db:turso:migrate`; ambos destinos consumen `prisma/migrations`.
 
 ## Incrementos actuales: sesión, perfil y espacios propios
 
@@ -67,7 +68,7 @@ curl -i http://127.0.0.1:8080/api/v1/statistical-spaces \
 
 `GET /api/v1/users/me` lee el perfil y `PATCH /api/v1/users/me` permite cambiar únicamente `displayName`. `POST /api/v1/statistical-spaces` recibe solo `name` (1–120 caracteres tras recortar espacios); `GET /api/v1/statistical-spaces` devuelve únicamente los espacios del usuario autenticado. Todas estas rutas requieren sesión. El propietario se determina en el backend, nunca en el cuerpo. Si el perfil local no existe todavía, `GET`, `PATCH` y las rutas de espacios devuelven `404`: primero ejecuta `PUT /users/me`.
 
-Las pruebas de estas etapas se realizaron con libSQL en memoria. Las migraciones nuevas `002` y `003` **no se aplicaron aquí a tu Turso remoto**; ejecútalas en el entorno correcto antes de probar allí. No uses una base de producción para datos de prueba.
+Las pruebas de estas etapas despliegan las migraciones Prisma sobre bases SQLite temporales. La base local existente se incorporó mediante baseline, sin volver a crear sus tablas ni borrar datos.
 
 ### Consumirla desde el frontend
 
@@ -114,13 +115,13 @@ src/
 │   └── statistical-spaces.repository.ts
 ```
 
-El recorrido para espacios estadísticos es `guard de Descope → controller → servicio → usuario local → repositorio → Turso`.
+El recorrido para espacios estadísticos es `guard de Descope → controller → servicio → usuario local → repositorio → Prisma → SQLite`.
 
 - `main.ts` crea la aplicación, configura prefijo, versión, CORS y puerto.
 - `AppModule` reúne los módulos de la aplicación.
 - `StatisticalSpacesModule` agrupa la funcionalidad de espacios y registra controlador y servicio.
 - `StatisticalSpacesController` declara `@Controller('statistical-spaces')`, recibe las peticiones HTTP y delega el trabajo.
-- Los DTOs y el `ValidationPipe` global validan el cuerpo al entrar; `StatisticalSpacesService` resuelve al usuario local y `StatisticalSpacesRepository` consulta Turso filtrando por propietario.
+- Los DTOs y el `ValidationPipe` global validan el cuerpo al entrar; `StatisticalSpacesService` resuelve al usuario local y `StatisticalSpacesRepository` consulta SQLite mediante `$queryRaw` parametrizado de Prisma, filtrando por propietario.
 
 Seguimos con módulos por funcionalidad. Los perfiles y espacios ya son persistentes; formularios, membresías y permisos compartidos vendrán en etapas posteriores.
 
@@ -140,7 +141,7 @@ Los tres cursos seleccionados son de Fernando Herrera/DevTalles. No hace falta t
 
 También se revisó `NestJS API Profesional` ([NestJS Mastery: Build & Deploy a Production-Ready API](https://www.udemy.com/course/master-nestjs-the-javascript-nodejs-framework/)). Es una segunda referencia opcional para contrastar organización, pruebas y autorización, no una sustitución de Fernando. Su biblioteca incluye secciones marcadas `OLDER CONTENT`, que no se usarán como configuración vigente.
 
-`Microservicios con NestJS` queda para una necesidad real de distribución. El primer producto se construye como un solo backend modular. MongoDB, PostgreSQL y TypeORM se estudian en el curso principal, pero la persistencia elegida para este proyecto es libSQL/Turso con SQL parametrizado.
+`Microservicios con NestJS` queda para una necesidad real de distribución. El primer producto se construye como un solo backend modular. MongoDB, PostgreSQL y TypeORM se estudian en el curso principal, pero la persistencia activa elegida para este proyecto es Prisma con SQLite local y SQL parametrizado.
 
 Estos cursos respaldan el backend y los informes. El análisis estadístico, la integración con IA y el uso de Polars requieren fuentes específicas adicionales cuando lleguemos a esa etapa.
 
@@ -160,9 +161,9 @@ Para seleccionar los complementos se consultaron [Testing: introducción a prueb
 
 **Del curso:** CLI oficial, TypeScript, Express como adaptador inicial, módulos por funcionalidad, controladores con decoradores, separación posterior de servicios y desarrollo incremental.
 
-**Adaptación propia:** pnpm, Nest 12.0.3, el nombre del proyecto, rutas `/api/v1`, Descope, Turso, DTOs con `class-validator` y `class-transformer`, puerto 8080 y orígenes de Astro/Next.js. La configuración ESM y las importaciones `.js` provienen del CLI actual; no deben reemplazarse mecánicamente por las de una grabación anterior.
+**Adaptación propia:** pnpm, Nest 12.0.3, el nombre del proyecto, rutas `/api/v1`, Descope, Prisma con SQLite local, DTOs con `class-validator` y `class-transformer`, puerto 8080 y orígenes de Astro/Next.js. La configuración ESM y las importaciones `.js` provienen del CLI actual; no deben reemplazarse mecánicamente por las de una grabación anterior.
 
-Las etapas 3–5 cuentan con pruebas automatizadas usando el runner integrado de Node y libSQL en memoria. El curso de Testing utiliza Jest; no se incorporó solo para replicar su configuración.
+Las etapas 3–5 cuentan con pruebas automatizadas usando el runner integrado de Node y bases SQLite temporales migradas por Prisma. El curso de Testing utiliza Jest; no se incorporó solo para replicar su configuración.
 
 Para compatibilidad actual se contrastaron las [instrucciones oficiales de inicio](https://docs.nestjs.com/first-steps), [versionado de rutas](https://docs.nestjs.com/techniques/versioning) y [CORS](https://docs.nestjs.com/security/cors). La versión se consultó con `pnpm view @nestjs/core version` y se fijó en `package.json`.
 

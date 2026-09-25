@@ -1,3 +1,4 @@
+-- Equivalente histórico de migrations/002_create_statistical_spaces.sql.
 CREATE TABLE statistical_spaces (
   id TEXT PRIMARY KEY NOT NULL,
   name TEXT NOT NULL CHECK (length(trim(name)) BETWEEN 1 AND 120),

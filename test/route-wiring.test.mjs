@@ -10,7 +10,6 @@ import { test } from 'node:test';
 import { DescopeSessionGuard } from '../dist/auth/descope-session.guard.js';
 import { DescopeService } from '../dist/auth/descope.service.js';
 import { PrismaService } from '../dist/database/prisma.service.js';
-import { TursoService } from '../dist/database/turso.service.js';
 import { StatisticalSpacesController } from '../dist/statistical-spaces/statistical-spaces.controller.js';
 import { StatisticalSpacesRepository } from '../dist/statistical-spaces/statistical-spaces.repository.js';
 import { StatisticalSpacesService } from '../dist/statistical-spaces/statistical-spaces.service.js';
@@ -36,10 +35,6 @@ test('los controladores Nest arrancan con dependencias aisladas y rutas protegid
         StatisticalSpacesRepository,
         StatisticalSpacesService,
         { provide: PrismaService, useValue: context.prisma },
-        {
-          provide: TursoService,
-          useValue: { getClient: () => context.client },
-        },
         {
           provide: DescopeService,
           useValue: {

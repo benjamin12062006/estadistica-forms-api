@@ -18,14 +18,12 @@ async function withServices(run) {
   const context = await createUsersTestContext();
   try {
     const users = new UsersService(context.repository);
-    const spacesRepository = new StatisticalSpacesRepository({
-      getClient: () => context.client,
-    });
+    const spacesRepository = new StatisticalSpacesRepository(context.prisma);
     await run({
       users,
       spacesRepository,
       spaces: new StatisticalSpacesService(users, spacesRepository),
-      client: context.client,
+      prisma: context.prisma,
     });
   } finally {
     await context.close();
@@ -33,34 +31,34 @@ async function withServices(run) {
 }
 
 test('el esquema de espacios se migra y referencia a app_users', async () => {
-  await withServices(async ({ client }) => {
-    const foreignKeys = await client.execute(
-      'PRAGMA foreign_key_list(statistical_spaces)',
-    );
-    assert.equal(foreignKeys.rows[0].table, 'app_users');
-    const index = await client.execute('PRAGMA index_list(statistical_spaces)');
+  await withServices(async ({ prisma }) => {
+    const foreignKeys = await prisma.$queryRaw`
+      PRAGMA foreign_key_list(statistical_spaces)
+    `;
+    assert.equal(foreignKeys[0].table, 'app_users');
+    const index = await prisma.$queryRaw`
+      PRAGMA index_list(statistical_spaces)
+    `;
     assert.ok(
-      index.rows.some(
-        (row) => row.name === 'idx_statistical_spaces_owner_created',
-      ),
+      index.some((row) => row.name === 'idx_statistical_spaces_owner_created'),
     );
     await assert.rejects(
-      client.execute({
-        sql: `INSERT INTO statistical_spaces (id, name, owner_id, created_at)
-          VALUES (?, ?, ?, ?)`,
-        args: [
-          'orphan',
-          'Huérfano',
-          'missing-user',
-          '2026-09-23T00:00:00.000Z',
-        ],
-      }),
+      prisma.$queryRaw`
+        INSERT INTO statistical_spaces (id, name, owner_id, created_at)
+        VALUES (
+          ${'orphan'},
+          ${'Huérfano'},
+          ${'missing-user'},
+          ${'2026-09-23T00:00:00.000Z'}
+        )
+        RETURNING id
+      `,
     );
   });
 });
 
 test('cada usuario solo crea y lista sus espacios persistidos', async () => {
-  await withServices(async ({ users, spaces, spacesRepository, client }) => {
+  await withServices(async ({ users, spaces, spacesRepository, prisma }) => {
     const aliceUser = await users.provision(alice);
     await users.provision(bob);
 
@@ -70,11 +68,10 @@ test('cada usuario solo crea y lista sus espacios persistidos', async () => {
     assert.deepEqual(await spaces.findAll(bob), [bobSpace]);
     assert.notEqual(aliceSpace.id, bobSpace.id);
 
-    const stored = await client.execute({
-      sql: 'SELECT owner_id FROM statistical_spaces WHERE id = ?',
-      args: [aliceSpace.id],
-    });
-    assert.equal(stored.rows[0].owner_id, aliceUser.id);
+    const stored = await prisma.$queryRaw`
+      SELECT owner_id FROM statistical_spaces WHERE id = ${aliceSpace.id}
+    `;
+    assert.equal(stored[0].owner_id, aliceUser.id);
 
     const restartedService = new StatisticalSpacesService(
       users,
@@ -85,15 +82,15 @@ test('cada usuario solo crea y lista sus espacios persistidos', async () => {
 });
 
 test('sin perfil local no se puede crear ni listar espacios', async () => {
-  await withServices(async ({ spaces, client }) => {
+  await withServices(async ({ spaces, prisma }) => {
     await assert.rejects(spaces.findAll(alice), { status: 404 });
     await assert.rejects(spaces.create(alice, { name: 'Sin dueño' }), {
       status: 404,
     });
-    const count = await client.execute(
-      'SELECT COUNT(*) AS total FROM statistical_spaces',
-    );
-    assert.equal(count.rows[0].total, 0);
+    const count = await prisma.$queryRaw`
+      SELECT COUNT(*) AS total FROM statistical_spaces
+    `;
+    assert.equal(Number(count[0].total), 0);
   });
 });
 

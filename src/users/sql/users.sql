@@ -1,4 +1,7 @@
 
+-- Equivalentes SQL de las consultas ejecutables de users.repository.ts.
+-- Cada ? representa un valor parametrizado por Prisma.sql.
+
 -- Inserta un nuevo usuario local si no existe, o actualiza si ya existe.
 INSERT INTO app_users
   (id, identity_issuer, identity_subject, email, display_name, created_at, updated_at)
@@ -10,11 +13,20 @@ ON CONFLICT(identity_issuer, identity_subject) DO UPDATE SET
     THEN excluded.updated_at
     ELSE app_users.updated_at
   END
-RETURNING id, email, display_name, created_at, updated_at;
-
+RETURNING
+  id,
+  email,
+  display_name AS displayName,
+  created_at AS createdAt,
+  updated_at AS updatedAt;
 
 -- Busca el perfil local de la identidad validada por Descope.
-SELECT id, email, display_name, created_at, updated_at
+SELECT
+  id,
+  email,
+  display_name AS displayName,
+  created_at AS createdAt,
+  updated_at AS updatedAt
 FROM app_users
 WHERE identity_issuer = ? AND identity_subject = ?;
 
@@ -26,4 +38,9 @@ UPDATE app_users SET
     ELSE updated_at
   END
 WHERE identity_issuer = ? AND identity_subject = ?
-RETURNING id, email, display_name, created_at, updated_at;
+RETURNING
+  id,
+  email,
+  display_name AS displayName,
+  created_at AS createdAt,
+  updated_at AS updatedAt;

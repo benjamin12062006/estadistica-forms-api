@@ -4,7 +4,8 @@ Este documento explica las consultas de [`users.sql`](./users.sql).
 
 El archivo `users.sql` no se ejecuta como migración ni sustituye a
 `users.repository.ts`. El repositorio es la única fuente ejecutable; este SQL
-sirve para revisar las sentencias que el repositorio envía a Turso.
+sirve para revisar sus sentencias. El destino es la base configurada para la
+API: SQLite local con `file:` o Turso con `libsql:`.
 
 ## Origen en el proyecto
 
@@ -13,9 +14,10 @@ sirve para revisar las sentencias que el repositorio envía a Turso.
 
 ## Seguridad de los parámetros
 
-Cada `?` es un parámetro posicional enviado por separado en `args`. El valor no
-se reemplaza como texto dentro del SQL; por eso un valor del cliente no puede
-convertirse en sintaxis SQL.
+Cada `?` representa un parámetro posicional. En el repositorio, los valores se
+insertan mediante `${...}` dentro del tag `Prisma.sql`; Prisma los envía por
+separado, no como texto concatenado dentro del SQL. Por eso un valor del
+cliente no puede convertirse en sintaxis SQL.
 
 ## 1. `provision(identity)`
 
@@ -44,7 +46,9 @@ email, se conserva el email ya registrado (`b`).
 `CASE` solo renueva `updated_at` si llegó un email distinto.
 
 `RETURNING` evita una segunda consulta `SELECT`: devuelve la fila resultante de
-esta misma operación.
+esta misma operación. Los alias `AS displayName`, `AS createdAt` y
+`AS updatedAt` adaptan los nombres SQL con guiones bajos al objeto TypeScript
+que devuelve el repositorio.
 
 ## 2. `findByIdentity(identity)`
 
@@ -72,7 +76,9 @@ Descope.
 5. `identity.subject`.
 
 `CASE ... END` calcula el nuevo valor de `updated_at` dentro de la misma
-sentencia. Si el nombre no cambia, conserva la fecha anterior.
+sentencia. Si el nombre no cambia, conserva la fecha anterior. `RETURNING`
+entrega igualmente la fila, por lo que el método puede devolver el perfil sin
+una lectura previa.
 
 Si no existe la identidad, `UPDATE` no afecta filas y `RETURNING` no devuelve
 ninguna. El servicio transforma ese caso en un error `404`.

@@ -1,3 +1,7 @@
+# Plan histórico sustituido
+
+> **Estado:** este plan documenta la decisión anterior. La transición se completó en [`02-plan-prisma-sqlite-docker.md`](./02-plan-prisma-sqlite-docker.md) y el retiro de los artefactos heredados se registra en [`04-retirar-migrador-sql-heredado.md`](../../bitacora-construccion/settings/04-retirar-migrador-sql-heredado.md). No ejecutes los comandos o scripts antiguos que se mencionan más abajo: ya no existen en el proyecto.
+
 Sí, es válido combinar Prisma y SQL manual en un mismo proyecto. Lo que no conviene es tener dos sistemas independientes modificando la misma base sin una sola autoridad de migraciones.
 
 Hay que separar dos cosas:

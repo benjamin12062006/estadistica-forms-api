@@ -1,3 +1,4 @@
+-- Equivalente histórico de migrations/001_create_app_users.sql.
 CREATE TABLE app_users (
   id TEXT PRIMARY KEY NOT NULL,
   identity_issuer TEXT NOT NULL CHECK (length(identity_issuer) > 0),

@@ -8,17 +8,27 @@ datasource db {
   provider = "sqlite"
 }
 
-// Etapa 1: este modelo refleja migrations/001_create_app_users.sql.
-// Las migraciones SQL siguen siendo la autoridad del esquema.
 model AppUser {
-  id              String  @id
-  identityIssuer  String  @map("identity_issuer")
-  identitySubject String  @map("identity_subject")
-  email           String?
-  displayName     String? @map("display_name")
-  createdAt       String  @map("created_at")
-  updatedAt       String  @map("updated_at")
+  id                String             @id
+  identityIssuer    String             @map("identity_issuer")
+  identitySubject   String             @map("identity_subject")
+  email             String?
+  displayName       String?            @map("display_name")
+  createdAt         String             @map("created_at")
+  updatedAt         String             @map("updated_at")
+  statisticalSpaces StatisticalSpace[]
 
   @@unique([identityIssuer, identitySubject])
   @@map("app_users")
+}
+
+model StatisticalSpace {
+  id        String  @id
+  name      String
+  ownerId   String  @map("owner_id")
+  createdAt String  @map("created_at")
+  owner     AppUser @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+
+  @@index([ownerId, createdAt(sort: Desc), id(sort: Desc)], map: "idx_statistical_spaces_owner_created")
+  @@map("statistical_spaces")
 }

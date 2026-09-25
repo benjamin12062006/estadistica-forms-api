@@ -1,17 +1,24 @@
-import { createClient } from '@libsql/client';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { applyMigrations } from '../../scripts/db/migrate.mjs';
+import { promisify } from 'node:util';
 import { PrismaService } from '../../dist/database/prisma.service.js';
 import { UsersRepository } from '../../dist/users/users.repository.js';
 
+const execFileAsync = promisify(execFile);
+const projectRoot = process.cwd();
+const prismaCli = join(projectRoot, 'node_modules', '.bin', 'prisma');
+
 export async function createUsersTestContext() {
   const directory = await mkdtemp(join(tmpdir(), 'estadistica-users-'));
-  const databaseUrl = `file:${join(directory, 'test.db')}`;
-  const client = createClient({ url: databaseUrl });
-  await client.execute('PRAGMA foreign_keys = ON');
-  await applyMigrations(client);
+  const databasePath = join(directory, 'test.db');
+  const databaseUrl = `file:${databasePath}`;
+  await writeFile(databasePath, '');
+  await execFileAsync(prismaCli, ['migrate', 'deploy'], {
+    cwd: projectRoot,
+    env: { ...process.env, DATABASE_URL: databaseUrl },
+  });
 
   const prisma = new PrismaService({
     get(key) {
@@ -22,12 +29,10 @@ export async function createUsersTestContext() {
   await prisma.onModuleInit();
 
   return {
-    client,
     prisma,
     repository: new UsersRepository(prisma),
     async close() {
       await prisma.onModuleDestroy();
-      client.close();
       await rm(directory, { recursive: true, force: true });
     },
   };
