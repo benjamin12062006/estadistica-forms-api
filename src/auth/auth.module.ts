@@ -6,6 +6,6 @@ import { DescopeService } from './descope.service.js';
 @Module({
   controllers: [AuthController],
   providers: [DescopeService, DescopeSessionGuard],
-  exports: [DescopeSessionGuard],
+  exports: [DescopeService, DescopeSessionGuard],
 })
 export class AuthModule {}

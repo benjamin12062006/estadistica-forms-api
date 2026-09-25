@@ -6,4 +6,7 @@ coverage/
 .env
 .env.*
 !.env.example
+requests/.env
 .DS_Store
+.data/
+src/generated/prisma/

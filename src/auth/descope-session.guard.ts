@@ -50,7 +50,6 @@ export class DescopeSessionGuard implements CanActivate {
         'La sesión no contiene una identidad válida.',
       );
     }
-
     return value;
   }
 

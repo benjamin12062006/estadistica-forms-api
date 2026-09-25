@@ -93,7 +93,9 @@ Para Magic Link usaremos la acción **Sign Up or In**: si la persona no existe, 
 **Objetivo:** conectar la base de Turso Cloud ya elegida antes de afirmar que existe
 un «usuario de nuestra aplicación».
 
-Usaremos `@tursodatabase/serverless` con SQL parametrizado y una migración versionada.
+La URL de la base existente usa `libsql://`, por lo que usamos `@libsql/client/web`
+con SQL parametrizado y una migración versionada. El cambio y su verificación están
+registrados en [la bitácora de la etapa 2](../../bitacora-construccion/auth/02-conectar-turso-y-crear-esquema.md).
 No activaremos funciones experimentales ni introduciremos TypeORM en este incremento.
 
 **Modelo mínimo que aparecerá tras esa decisión:**

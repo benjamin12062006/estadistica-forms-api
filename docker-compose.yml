@@ -1,0 +1,81 @@
+# Arrancar el contenedor: docker compose up --detach sqlite
+# Aplicar migrations/*.sql: docker compose run --rm migrate
+# Abrir la consola: docker compose exec sqlite sqlite3 /data/estadistica-dev.db
+# SQLite trabaja sobre un archivo local; no expone ningún puerto.
+
+x-sqlite-tool: &sqlite-tool
+  image: alpine/sqlite:latest
+  pull_policy: always
+  working_dir: /workspace
+  volumes:
+    - type: bind
+      source: ./.data
+      target: /data
+    - type: bind
+      source: ./migrations
+      target: /migrations
+      read_only: true
+services:
+  migrate:
+    <<: *sqlite-tool
+    profiles:
+      - tools
+    entrypoint:
+      - /bin/sh
+      - -ec
+    command:
+      - |
+        database="$${SQLITE_DATABASE:-/data/estadistica-dev.db}"
+
+        sqlite3 -bail "$$database" '
+          PRAGMA foreign_keys = ON;
+          CREATE TABLE IF NOT EXISTS schema_migrations (
+            version TEXT PRIMARY KEY NOT NULL,
+            applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+          );
+        '
+
+        for migration in /migrations/*.sql; do
+          version="$$(basename "$$migration")"
+          case "$$version" in
+            [0-9][0-9][0-9]_[a-z0-9_]*.sql) ;;
+            *) continue ;;
+          esac
+
+          applied="$$(sqlite3 "$$database" \
+            "SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version = '$$version');")"
+          if [ "$$applied" = '1' ]; then
+            echo "Migración ya aplicada: $$version"
+            continue
+          fi
+
+          {
+            echo 'PRAGMA foreign_keys = ON;'
+            echo 'BEGIN IMMEDIATE;'
+            cat "$$migration"
+            printf "\nINSERT INTO schema_migrations (version) VALUES ('%s');\n" "$$version"
+            echo 'COMMIT;'
+          } | sqlite3 -bail "$$database"
+
+          echo "Migración aplicada: $$version"
+        done
+
+  sqlite:
+    <<: *sqlite-tool
+    init: true
+    entrypoint:
+      - /bin/sh
+      - -ec
+    command:
+      - |
+        database="$${SQLITE_DATABASE:-/data/estadistica-dev.db}"
+        sqlite3 "$$database" 'PRAGMA foreign_keys = ON;'
+        exec tail -f /dev/null
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - test "$$(sqlite3 /data/estadistica-dev.db 'PRAGMA quick_check;')" = ok
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 2s

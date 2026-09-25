@@ -1,49 +1,23 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
-
-export type StatisticalSpace = {
-  id: string;
-  name: string;
-  createdAt: string;
-};
+import { Injectable } from '@nestjs/common';
+import type { AuthenticatedIdentity } from '../auth/authenticated-request.js';
+import { UsersService } from '../users/users.service.js';
+import { StatisticalSpacesRepository } from './statistical-spaces.repository.js';
+import type { CreateSpaceDto } from './statistical-spaces.dto.js';
 
 @Injectable()
 export class StatisticalSpacesService {
-  private readonly spaces: StatisticalSpace[] = [];
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly spacesRepository: StatisticalSpacesRepository,
+  ) {}
 
-  findAll(): readonly StatisticalSpace[] {
-    return this.spaces;
+  async findAll(identity: AuthenticatedIdentity) {
+    const owner = await this.usersService.findCurrent(identity);
+    return this.spacesRepository.findAllByOwner(owner.id);
   }
 
-  create(input: unknown): StatisticalSpace {
-    const name = this.readName(input);
-    const space: StatisticalSpace = {
-      id: randomUUID(),
-      name,
-      createdAt: new Date().toISOString(),
-    };
-
-    this.spaces.push(space);
-    return space;
-  }
-
-  private readName(input: unknown): string {
-    if (typeof input !== 'object' || input === null || Array.isArray(input)) {
-      throw new BadRequestException('El cuerpo debe ser un objeto JSON.');
-    }
-
-    const { name } = input as Record<string, unknown>;
-    if (typeof name !== 'string') {
-      throw new BadRequestException('El nombre del espacio es obligatorio.');
-    }
-
-    const normalizedName = name.trim();
-    if (normalizedName.length === 0 || normalizedName.length > 120) {
-      throw new BadRequestException(
-        'El nombre del espacio debe tener entre 1 y 120 caracteres.',
-      );
-    }
-
-    return normalizedName;
+  async create(identity: AuthenticatedIdentity, input: CreateSpaceDto) {
+    const owner = await this.usersService.findCurrent(identity);
+    return this.spacesRepository.create(owner.id, input.name);
   }
 }

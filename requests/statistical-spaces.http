@@ -1,27 +1,45 @@
 @baseUrl = http://127.0.0.1:8080
 
 ###
-# Un espacio estadístico comienza vacío y pertenece al proceso local mientras
-# todavía no implementamos autenticación ni persistencia.
+# Primero aprovisiona el usuario con PUT /api/v1/users/me.
+# El propietario siempre sale de la sesión; no se envía en el cuerpo.
 POST {{baseUrl}}/api/v1/statistical-spaces
 Content-Type: application/json
 Accept: application/json
+Authorization: Bearer {{$dotenv TEST_SESSION_JWT}}
 
 {
   "name": "Satisfacción de usuarios"
 }
 
 ###
-# Consultar los espacios creados desde que se inició la API.
+# Consultar únicamente los espacios del usuario autenticado.
 GET {{baseUrl}}/api/v1/statistical-spaces
 Accept: application/json
+Authorization: Bearer {{$dotenv TEST_SESSION_JWT}}
 
 ###
 # Comprobar la validación de un nombre vacío.
 POST {{baseUrl}}/api/v1/statistical-spaces
 Content-Type: application/json
 Accept: application/json
+Authorization: Bearer {{$dotenv TEST_SESSION_JWT}}
 
 {
   "name": "   "
 }
+
+### Intento de elegir propietario: debe responder 400
+POST {{baseUrl}}/api/v1/statistical-spaces
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{$dotenv TEST_SESSION_JWT}}
+
+{
+  "name": "No permitido",
+  "ownerId": "otro-usuario"
+}
+
+### Sin sesión: debe responder 401
+GET {{baseUrl}}/api/v1/statistical-spaces
+Accept: application/json

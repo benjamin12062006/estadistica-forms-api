@@ -51,7 +51,7 @@ src/
 │   ├── users.module.ts
 │   ├── users.controller.ts
 │   ├── users.service.ts
-│   └── users.repository.ts       # adaptador Turso cuando exista la etapa 2
+│   └── users.repository.ts       # se añadirá al aprovisionar perfiles en la etapa 3
 ├── statistical-spaces/
 │   ├── statistical-spaces.module.ts
 │   ├── statistical-spaces.controller.ts

@@ -5,8 +5,8 @@
 GET {{apiUrl}}/auth/me
 Accept: application/json
 
-### Con sesión: el token existe solo durante la ejecución local
+### Con sesión: el token temporal se genera con pnpm api:auth-test
 # @name authenticated
 GET {{apiUrl}}/auth/me
 Accept: application/json
-Authorization: Bearer {{$processEnv TEST_SESSION_JWT}}
+Authorization: Bearer {{$dotenv TEST_SESSION_JWT}}

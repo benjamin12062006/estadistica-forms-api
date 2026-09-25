@@ -1,0 +1,24 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// Etapa 1: este modelo refleja migrations/001_create_app_users.sql.
+// Las migraciones SQL siguen siendo la autoridad del esquema.
+model AppUser {
+  id              String  @id
+  identityIssuer  String  @map("identity_issuer")
+  identitySubject String  @map("identity_subject")
+  email           String?
+  displayName     String? @map("display_name")
+  createdAt       String  @map("created_at")
+  updatedAt       String  @map("updated_at")
+
+  @@unique([identityIssuer, identitySubject])
+  @@map("app_users")
+}

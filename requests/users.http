@@ -1,0 +1,29 @@
+@apiUrl = http://127.0.0.1:8080/api/v1
+
+### Sin sesión: debe responder 401 y no crear un usuario
+# @name unauthenticatedUser
+PUT {{apiUrl}}/users/me
+Accept: application/json
+
+### Con sesión validada: repetir debe devolver el mismo id local
+# @name provisionCurrentUser
+PUT {{apiUrl}}/users/me
+Accept: application/json
+Authorization: Bearer {{$dotenv TEST_SESSION_JWT}}
+
+### Consultar el perfil después de aprovisionarlo
+# @name getCurrentUser
+GET {{apiUrl}}/users/me
+Accept: application/json
+Authorization: Bearer {{$dotenv TEST_SESSION_JWT}}
+
+### Cambiar solo un campo propio del producto
+# @name updateCurrentUser
+PATCH {{apiUrl}}/users/me
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{$dotenv TEST_SESSION_JWT}}
+
+{
+  "displayName": "Investigadora de ejemplo"
+}
