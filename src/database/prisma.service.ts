@@ -13,6 +13,7 @@ export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
+  
   constructor(configService: ConfigService) {
     const connection = resolveDatabaseConnection(configService);
     const adapter = new PrismaLibSql(connection);
@@ -26,4 +27,5 @@ export class PrismaService
   async onModuleDestroy(): Promise<void> {
     await this.$disconnect();
   }
+  
 }

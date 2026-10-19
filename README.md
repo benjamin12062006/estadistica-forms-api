@@ -3,11 +3,16 @@
 Backend de formularios, estadísticas e investigación, construido paso a paso con **NestJS + TypeScript + pnpm**. Ya dispone de identidad validada, perfil local y espacios privados persistidos.
 
 Las [etapas de autenticación](./docs/plans/03-etapas-autenticacion-descope-turso.md)
-validan sesiones con Descope y guardan perfiles y espacios en SQLite local. Configura
+validan sesiones con Descope y guardan perfiles y espacios mediante Prisma/libSQL.
+La configuración local actual usa **Turso**: `DATABASE_URL` contiene la misma URL
+`libsql://` de `TURSO_DATABASE_URL` y utiliza `TURSO_AUTH_TOKEN`. El cambio y su
+verificación están en la [entrada 05 de settings](./bitacora-construccion/settings/05-usar-turso-en-desarrollo.md).
+
+SQLite local permanece como opción explícita: configura
 `DATABASE_URL=file:./.data/estadistica-dev.db` en `.env` y ejecuta
-`pnpm db:local:migrate` antes de usar las rutas persistentes. `prisma/migrations`
-es la única fuente activa de cambios; las pruebas crean bases SQLite temporales y
-aplican sobre ellas esa misma historia.
+`pnpm db:local:migrate`. `DATABASE_URL` tiene prioridad sobre `TURSO_DATABASE_URL`.
+`prisma/migrations` es la única fuente activa de cambios; las pruebas crean bases
+SQLite temporales y aplican sobre ellas esa misma historia.
 
 Para crear un cambio de esquema se usa `pnpm db:local:migration:create -- --name nombre`. La misma migración se despliega localmente con `pnpm db:local:migrate` y en Turso con `pnpm db:turso:migrate`; ambos destinos consumen `prisma/migrations`.
 

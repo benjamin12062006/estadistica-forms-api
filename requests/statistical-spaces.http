@@ -1,6 +1,6 @@
 @baseUrl = http://127.0.0.1:8080
 
-###
+### Crear un espacio de estadísticas
 # Primero aprovisiona el usuario con PUT /api/v1/users/me.
 # El propietario siempre sale de la sesión; no se envía en el cuerpo.
 POST {{baseUrl}}/api/v1/statistical-spaces

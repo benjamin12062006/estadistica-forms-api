@@ -11,6 +11,7 @@ export function resolveDatabaseConnection(
   const url =
     configService.get<string>('DATABASE_URL')?.trim() ||
     configService.get<string>('TURSO_DATABASE_URL')?.trim();
+    // 'file:./.data/estadistica-dev.db';
   const authToken = configService.get<string>('TURSO_AUTH_TOKEN')?.trim();
 
   if (!url) {
